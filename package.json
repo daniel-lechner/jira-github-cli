@@ -1,11 +1,15 @@
 {
-  "name": "jira-github-cli",
+  "name": "@lechnerio/jira-github-cli",
   "version": "1.0.0",
   "description": "CLI tool to create linked Jira and GitHub issues",
   "main": "dist/index.js",
   "bin": {
     "jgh": "./dist/cli.js"
   },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "ts-node src/cli.ts",
@@ -28,7 +32,15 @@
     "ts-node": "^10.9.0"
   },
   "preferGlobal": true,
-  "keywords": ["jira", "github", "cli", "issues"],
-  "author": "Daniel Lechner",
-  "license": "MIT"
+  "keywords": ["jira", "github", "cli", "issues", "productivity", "automation"],
+  "author": "Daniel Lechner <your-email@example.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/daniel-lechner/jira-github-cli.git"
+  },
+  "homepage": "https://github.com/daniel-lechner/jira-github-cli#readme",
+  "bugs": {
+    "url": "https://github.com/daniel-lechner/jira-github-cli/issues"
+  }
 }

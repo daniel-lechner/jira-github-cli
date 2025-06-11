@@ -30,7 +30,8 @@ npm run build
 4. Install globally (optional):
 
 ```bash
-npm install -g .
+# install globally to use `jgh` command anywhere
+npm install -g @lechnerio/jira-github-cli
 ```
 
 ## Setup
