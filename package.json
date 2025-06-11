@@ -1,0 +1,34 @@
+{
+  "name": "jira-github-cli",
+  "version": "1.0.0",
+  "description": "CLI tool to create linked Jira and GitHub issues",
+  "main": "dist/index.js",
+  "bin": {
+    "jgh": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/cli.ts",
+    "start": "node dist/cli.js",
+    "watch": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^11.0.0",
+    "inquirer": "^9.2.0",
+    "axios": "^1.5.0",
+    "configstore": "^6.0.0",
+    "chalk": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/inquirer": "^9.0.0",
+    "@types/configstore": "^6.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  },
+  "preferGlobal": true,
+  "keywords": ["jira", "github", "cli", "issues"],
+  "author": "Daniel Lechner",
+  "license": "MIT"
+}
