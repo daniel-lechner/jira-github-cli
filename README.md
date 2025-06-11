@@ -67,91 +67,54 @@ gh auth login
 ### Basic Commands
 
 ```bash
-# View current configuration
-jgh config
+# Setup and Configuration
+jgh setup                          # Initial configuration setup
+jgh reconfigure                    # Update missing/incomplete settings
+jgh config                         # View current configuration
 
-# Create basic issue
-jgh create "Fix login bug"
+# Create Issues
+jgh create "Fix login bug"                                    # Basic issue
+jgh create "Fix login bug +bug +urgent @me"                  # With labels and assignment
+jgh create "Fix login bug !high +critical @me"              # With priority, labels, assignment
+jgh create "Fix login bug (in progress) !medium +backend"   # With status, priority, labels
+jgh create "User registration feature !low" -d "Add user registration with email validation" -t Story
 
-# Create with description
-jgh create "Fix login bug" --description "Users cannot log in with OAuth"
-```
+# Update Issues
+jgh update PRJ-123 "+bug"                     # Add label
+jgh update PRJ-123 "-old +new"               # Remove old label, add new label
+jgh update PRJ-123 "@me"                     # Assign to yourself
+jgh update PRJ-123 "@unassign"               # Unassign from everyone
+jgh update PRJ-123 "!high"                   # Set high priority
+jgh update PRJ-123 "(in progress)"           # Change status
+jgh update PRJ-123 "(done)"                  # Mark as done (closes GitHub issue)
+jgh update PRJ-123 "(closed)"                # Close issue
+jgh update PRJ-123 "!medium +urgent @me"     # Combine: priority + label + assignment
 
-### Title Parsing (Smart Syntax)
+# List Issues
+jgh list                           # Show all open issues with sync status
+jgh list mine                      # Show only issues assigned to you
 
-```bash
-# Assign to yourself, add labels, set status
-jgh create "Fix login bug @me #bug #urgent (In Progress)"
+# Priority Levels
+!asap    # Maps to "Express" in Jira, creates "high-priority" label in GitHub
+!high    # Maps to "High" in Jira, creates "high-priority" label in GitHub
+!medium  # Maps to "Medium" in Jira, creates "medium-priority" label in GitHub
+!low     # Maps to "Low" in Jira, creates "low-priority" label in GitHub
 
-# Just assignment and labels
-jgh create "Update documentation @me #docs #improvement"
+# Status Examples (depends on your Jira workflow)
+(todo)           # Move to To Do
+(in progress)    # Move to In Progress
+(review)         # Move to Review
+(done)           # Mark as Done (closes GitHub issue)
+(closed)         # Close issue (closes GitHub issue)
+(rejected)       # Reject issue (closes GitHub issue)
 
-# Just status transition
-jgh create "Review code (Code Review)"
-```
+# Issue Icons in List View
+🔄  # Synced to both Jira and GitHub (green)
+🗂️  # Jira only (yellow)
+💻  # GitHub only (white)
 
-### Explicit Flags
-
-Use command-line flags for precise control:
-
-```bash
-# Assign to yourself
-jgh create "Fix login bug" --assign-me
-
-# Add GitHub labels
-jgh create "Fix login bug" --labels "bug,urgent,frontend"
-
-# Set Jira status
-jgh create "Fix login bug" --status "In Progress"
-
-# Combine multiple options
-jgh create "Fix login bug" --assign-me --labels "bug,urgent" --status "In Progress"
-```
-
-### Mixed Approach
-
-Combine parsing and flags:
-
-```bash
-# Parse assignment, use flags for labels and status
-jgh create "Fix login bug @me" --labels "bug,urgent" --status "In Progress"
-
-# Parse labels, use flags for assignment and status
-jgh create "Update docs #documentation" --assign-me --status "In Review"
-```
-
-### Advanced Examples
-
-```bash
-# Complex issue with all features
-jgh create "Implement user authentication @me #feature #backend #security (In Progress)" \
-  --description "Add OAuth2 integration with role-based access control"
-
-# Bug report with specific issue type
-jgh create "Login form validation error @me #bug" \
-  --type "Bug" \
-  --description "Email validation regex is too restrictive"
-
-# Story with custom status
-jgh create "User profile page redesign" \
-  --assign-me \
-  --labels "ui,story,design" \
-  --status "Design Review" \
-  --type "Story"
-```
-
-## Development
-
-```bash
-# Use -- to pass arguments through npm
-npm run dev -- create "Test issue @me #test" --labels "development"
-
-# Watch for changes
-npm run watch
-```
-
-Build for production:
-
-```bashs
-npm run build
+# Complex Examples
+jgh create "Database migration !high +backend +migration @me (in progress)" -d "Migrate user table to new schema"
+jgh update PRJ-456 "!low -urgent +maintenance (review)"
+jgh create "Security vulnerability fix !asap +security +critical @me" -t Bug
 ```

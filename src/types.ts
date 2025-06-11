@@ -24,6 +24,7 @@ export interface JiraIssuePayload {
   description: string
   issueType: string
   assignee?: string
+  priority?: string
 }
 
 export interface JiraIssueResponse {
@@ -44,4 +45,43 @@ export interface ParsedTitle {
   assignMe: boolean
   labels: string[]
   status?: string
+  priority?: string
+}
+
+export interface ParsedCommand {
+  cleanTitle: string
+  assignMe: boolean
+  unassign: boolean
+  addLabels: string[]
+  removeLabels: string[]
+  status?: string
+  priority?: string
+}
+
+export interface JiraIssue {
+  key: string
+  summary: string
+  status: string
+  assignee?: string
+  labels: string[]
+  url: string
+}
+
+export interface GitHubIssue {
+  number: number
+  title: string
+  state: string
+  assignee?: string
+  labels: string[]
+  url: string
+  jiraKey?: string
+}
+
+export interface SyncStatus {
+  jiraKey: string
+  title: string
+  labels: string[]
+  status: "synced" | "jira-only" | "github-only"
+  jiraIssue?: JiraIssue
+  githubIssue?: GitHubIssue
 }
