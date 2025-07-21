@@ -19,13 +19,22 @@ export async function timeCommand(
 
   const jiraConfig: JiraConfig = config.get("jira")
 
+  if (!config.has("tempoToken")) {
+    console.log(
+      chalk.red(
+        "❌ No Tempo token found. Please add your Tempo OAuth token to configuration.",
+      ),
+    )
+    return
+  }
+
+  const tempoToken = config.get("tempoToken")
+
   try {
     console.log(chalk.yellow(`⌛ Logging ${duration} to ${issueKey}...`))
 
     const worklogId = await logTempoTime({
-      url: jiraConfig.url,
-      email: jiraConfig.email,
-      token: jiraConfig.token,
+      tempoToken,
       accountId: jiraConfig.accountId!,
       issueKey,
       duration,
