@@ -1,6 +1,6 @@
 {
   "name": "@lechnerio/jira-github-cli",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "CLI tool to create linked Jira and GitHub issues",
   "main": "dist/index.js",
   "bin": {
