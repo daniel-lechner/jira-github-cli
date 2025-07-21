@@ -30,6 +30,12 @@ export async function setupCommand(): Promise<void> {
       mask: "*",
     },
     {
+      type: "password",
+      name: "tempoToken",
+      message: "Enter your Tempo OAuth token:",
+      mask: "*",
+    },
+    {
       type: "input",
       name: "jiraProject",
       message: "Enter your Jira project key (e.g., PRJ):",
@@ -69,6 +75,7 @@ export async function setupCommand(): Promise<void> {
       accountId: accountId,
     })
 
+    config.set("tempoToken", answers.tempoToken)
     config.set("jiraDisplayName", answers.jiraDisplayName)
 
     console.log(chalk.green("✓ Configuration saved successfully!"))
@@ -79,10 +86,5 @@ export async function setupCommand(): Promise<void> {
     )
   } catch (error) {
     console.error(chalk.red("❌ Error during setup:"), (error as Error).message)
-    console.log(
-      chalk.yellow(
-        "Configuration saved without account ID. You can run setup again to retry.",
-      ),
-    )
   }
 }
