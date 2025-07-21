@@ -94,6 +94,11 @@ jgh update PRJ-123 "!medium +urgent @me"     # Combine: priority + label + assig
 jgh list                           # Show all open issues with sync status
 jgh list mine                      # Show only issues assigned to you
 
+# Time Related Commands
+jgh estimate PRJ-123 3h
+jgh time PRJ-123 2h "Fixed XYZ"
+
+
 # Priority Levels
 !asap    # Maps to "Express" in Jira, creates "high-priority" label in GitHub
 !high    # Maps to "High" in Jira, creates "high-priority" label in GitHub
