@@ -382,4 +382,124 @@ export function compareSyncStatus(
   )
 }
 
+export async function logTempoTime(payload: {
+  url: string
+  email: string
+  token: string
+  accountId: string
+  issueKey: string
+  duration: string
+  description: string
+  date?: string
+}): Promise<string> {
+  const auth = Buffer.from(`${payload.email}:${payload.token}`).toString(
+    "base64",
+  )
+
+  const durationInSeconds = parseDurationToSeconds(payload.duration)
+  const workDate = payload.date || new Date().toISOString().split("T")[0]
+
+  try {
+    const response = await axios.post(
+      `${payload.url}/rest/tempo-timesheets/4/worklogs`,
+      {
+        issueKey: payload.issueKey,
+        timeSpentSeconds: durationInSeconds,
+        dateStarted: `${workDate}T09:00:00.000`,
+        comment: payload.description,
+        author: {
+          accountId: payload.accountId,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/json",
+        },
+      },
+    )
+
+    return response.data.id
+  } catch (error: any) {
+    throw new Error(
+      `Failed to log time: ${error.response?.data?.message || error.message}`,
+    )
+  }
+}
+
+export async function setJiraEstimate(payload: {
+  url: string
+  email: string
+  token: string
+  issueKey: string
+  duration: string
+}): Promise<void> {
+  const auth = Buffer.from(`${payload.email}:${payload.token}`).toString(
+    "base64",
+  )
+
+  const durationInSeconds = parseDurationToSeconds(payload.duration)
+
+  try {
+    await axios.put(
+      `${payload.url}/rest/api/3/issue/${payload.issueKey}`,
+      {
+        fields: {
+          timetracking: {
+            originalEstimate: formatSecondsToJiraFormat(durationInSeconds),
+          },
+        },
+      },
+      {
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/json",
+        },
+      },
+    )
+  } catch (error: any) {
+    throw new Error(
+      `Failed to set estimate: ${
+        error.response?.data?.errorMessages?.[0] || error.message
+      }`,
+    )
+  }
+}
+
+function parseDurationToSeconds(duration: string): number {
+  const hourMatch = duration.match(/(\d+(?:\.\d+)?)h/)
+  const minuteMatch = duration.match(/(\d+)min/)
+
+  let totalSeconds = 0
+
+  if (hourMatch) {
+    totalSeconds += parseFloat(hourMatch[1]) * 3600
+  }
+
+  if (minuteMatch) {
+    totalSeconds += parseInt(minuteMatch[1]) * 60
+  }
+
+  if (totalSeconds === 0) {
+    throw new Error(
+      "Invalid duration format. Use formats like: 30min, 2h, 1.5h",
+    )
+  }
+
+  return totalSeconds
+}
+
+function formatSecondsToJiraFormat(seconds: number): string {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours}h ${minutes}m`
+  } else if (hours > 0) {
+    return `${hours}h`
+  } else {
+    return `${minutes}m`
+  }
+}
+
 export { execAsync }

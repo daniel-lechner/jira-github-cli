@@ -3,9 +3,11 @@
 import { Command } from "commander"
 import { configCommand } from "./commands/config"
 import { createCommand } from "./commands/create"
+import { estimateCommand } from "./commands/estimate"
 import { listCommand } from "./commands/list"
 import { reconfigureCommand } from "./commands/reconfigure"
 import { setupCommand } from "./commands/setup"
+import { timeCommand } from "./commands/time"
 import { updateCommand } from "./commands/update"
 
 const program = new Command()
@@ -60,6 +62,25 @@ program
     const showMine = filter === "mine"
     await listCommand(showMine)
   })
+
+program
+  .command("time")
+  .argument("<issueKey>", "Jira issue key (e.g., FSD-68)")
+  .argument("<duration>", "Time to log (e.g., 30min, 2h, 1.5h)")
+  .option("-d, --description <desc>", "Work description")
+  .option(
+    "--date <date>",
+    "Date for the time entry (YYYY-MM-DD, defaults to today)",
+  )
+  .description("Log time to a Jira issue via Tempo")
+  .action(timeCommand)
+
+program
+  .command("estimate")
+  .argument("<issueKey>", "Jira issue key (e.g., FSD-68)")
+  .argument("<duration>", "Estimated duration (e.g., 4h, 2.5h, 30min)")
+  .description("Set time estimate for a Jira issue")
+  .action(estimateCommand)
 
 program
   .command("config")
