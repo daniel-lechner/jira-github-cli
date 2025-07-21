@@ -62,12 +62,11 @@ program
     const showMine = filter === "mine"
     await listCommand(showMine)
   })
-
 program
   .command("time")
   .argument("<issueKey>", "Jira issue key (e.g., FSD-68)")
   .argument("<duration>", "Time to log (e.g., 30min, 2h, 1.5h)")
-  .option("-d, --description <desc>", "Work description")
+  .argument("<description>", "Work description (required)")
   .option(
     "--date <date>",
     "Date for the time entry (YYYY-MM-DD, defaults to today)",

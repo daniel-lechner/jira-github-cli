@@ -8,7 +8,8 @@ const config = new Configstore("jira-github-cli")
 export async function timeCommand(
   issueKey: string,
   duration: string,
-  options: { description?: string; date?: string },
+  description: string,
+  options: { date?: string },
 ): Promise<void> {
   if (!config.has("jira")) {
     console.log(
@@ -38,14 +39,16 @@ export async function timeCommand(
       accountId: jiraConfig.accountId!,
       issueKey,
       duration,
-      description: options.description || `Work on ${issueKey}`,
+      description: description,
       date: options.date,
     })
 
     console.log(
       chalk.green(`✅ Time logged successfully! Worklog ID: ${worklogId}`),
     )
-    console.log(chalk.cyan(`🕒 Logged ${duration} on ${issueKey}`))
+    console.log(
+      chalk.cyan(`🕒 Logged ${duration} on ${issueKey}: "${description}"`),
+    )
   } catch (error) {
     console.error(chalk.red("❌ Error logging time:"), (error as Error).message)
   }
