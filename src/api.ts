@@ -1,5 +1,6 @@
 import axios from "axios"
 import { exec } from "child_process"
+import Configstore from "configstore"
 import { promisify } from "util"
 import {
   GitHubIssue,
@@ -383,46 +384,42 @@ export function compareSyncStatus(
 }
 
 export async function logTempoTime(payload: {
-  url: string
-  email: string
-  token: string
+  tempoToken: string
   accountId: string
   issueKey: string
   duration: string
   description: string
   date?: string
-}): Promise<string> {
-  const auth = Buffer.from(`${payload.email}:${payload.token}`).toString(
-    "base64",
-  )
-
+}): Promise<number> {
   const durationInSeconds = parseDurationToSeconds(payload.duration)
   const workDate = payload.date || new Date().toISOString().split("T")[0]
 
+  const issueId = await getIssueIdFromKey(payload.issueKey)
+
   try {
     const response = await axios.post(
-      `${payload.url}/rest/tempo-timesheets/4/worklogs`,
+      `https://api.tempo.io/4/worklogs`,
       {
-        issueKey: payload.issueKey,
+        authorAccountId: payload.accountId,
+        issueId: issueId,
         timeSpentSeconds: durationInSeconds,
-        dateStarted: `${workDate}T09:00:00.000`,
-        comment: payload.description,
-        author: {
-          accountId: payload.accountId,
-        },
+        startDate: workDate,
+        description: payload.description,
       },
       {
         headers: {
-          Authorization: `Basic ${auth}`,
+          Authorization: `Bearer ${payload.tempoToken}`,
           "Content-Type": "application/json",
         },
       },
     )
 
-    return response.data.id
+    return response.data.tempoWorklogId
   } catch (error: any) {
     throw new Error(
-      `Failed to log time: ${error.response?.data?.message || error.message}`,
+      `Failed to log time: ${
+        error.response?.data?.errors?.message || error.message
+      }`,
     )
   }
 }
@@ -437,7 +434,6 @@ export async function setJiraEstimate(payload: {
   const auth = Buffer.from(`${payload.email}:${payload.token}`).toString(
     "base64",
   )
-
   const durationInSeconds = parseDurationToSeconds(payload.duration)
 
   try {
@@ -463,6 +459,30 @@ export async function setJiraEstimate(payload: {
         error.response?.data?.errorMessages?.[0] || error.message
       }`,
     )
+  }
+}
+
+async function getIssueIdFromKey(issueKey: string): Promise<number> {
+  const config = new Configstore("jira-github-cli")
+  const jiraConfig = config.get("jira")
+  const auth = Buffer.from(`${jiraConfig.email}:${jiraConfig.token}`).toString(
+    "base64",
+  )
+
+  try {
+    const response = await axios.get(
+      `${jiraConfig.url}/rest/api/3/issue/${issueKey}?fields=id`,
+      {
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/json",
+        },
+      },
+    )
+
+    return parseInt(response.data.id)
+  } catch (error: any) {
+    throw new Error(`Failed to get issue ID: ${error.message}`)
   }
 }
 
@@ -501,5 +521,4 @@ function formatSecondsToJiraFormat(seconds: number): string {
     return `${minutes}m`
   }
 }
-
 export { execAsync }
