@@ -135,9 +135,10 @@ export async function detailsCommand(issueKey: string): Promise<void> {
       )
 
       console.log(
-        chalk.gray(
-          `Debug: Jira logged: ${jiraLoggedSeconds}s, Tempo logged: ${tempoLoggedSeconds}s, Tempo entries: ${tempoWorklogs.length}`,
-        ),
+        chalk
+          .gray
+          // `Debug: Jira logged: ${jiraLoggedSeconds}s, Tempo logged: ${tempoLoggedSeconds}s, Tempo entries: ${tempoWorklogs.length}`,
+          (),
       )
 
       const totalLoggedSeconds = Math.max(jiraLoggedSeconds, tempoLoggedSeconds)
