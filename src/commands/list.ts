@@ -187,10 +187,9 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
             0,
           )
 
-          console
-            .log
-            // `Debug: ${item.jiraKey} - Estimate: ${estimateSeconds}, Logged: ${loggedSeconds}, Worklogs: ${tempoWorklogs.length}`,
-            ()
+          // console.log(
+          //   `Debug: ${item.jiraKey} - Estimate: ${estimateSeconds}, Logged: ${loggedSeconds}, Worklogs: ${tempoWorklogs.length}`,
+          // )
 
           if (estimateSeconds > 0 || loggedSeconds > 0) {
             const loggedTime =
