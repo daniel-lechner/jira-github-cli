@@ -107,108 +107,138 @@ export async function detailsCommand(issueKey: string): Promise<void> {
       console.log(chalk.yellow(`\n⚠️  No linked GitHub issue found`))
     }
 
-    if (tempoToken) {
-      try {
-        const [timeTracking, tempoWorklogs] = await Promise.all([
-          getJiraIssueTimeTracking(
-            jiraConfig.url,
-            jiraConfig.email,
-            jiraConfig.token,
-            issueKey,
-          ),
-          getTempoWorklogsForIssue(tempoToken, issueKey),
-        ])
+    try {
+      const [timeTracking, tempoWorklogs] = await Promise.all([
+        getJiraIssueTimeTracking(
+          jiraConfig.url,
+          jiraConfig.email,
+          jiraConfig.token,
+          issueKey,
+        ),
+        tempoToken ? getTempoWorklogsForIssue(tempoToken, issueKey) : [],
+      ])
 
-        console.log(chalk.magenta(`\n⏱️  Time Tracking:`))
+      console.log(chalk.magenta(`\n⏱️  Time Tracking:`))
 
-        const estimateSeconds = parseJiraTimeToSeconds(
-          timeTracking.originalEstimate || "",
+      const estimateSeconds = parseJiraTimeToSeconds(
+        timeTracking.originalEstimate || "",
+      )
+      const remainingSeconds = parseJiraTimeToSeconds(
+        timeTracking.remainingEstimate || "",
+      )
+      const jiraLoggedSeconds = parseJiraTimeToSeconds(
+        timeTracking.timeSpent || "",
+      )
+      const tempoLoggedSeconds = tempoWorklogs.reduce(
+        (total, log) => total + log.timeSpentSeconds,
+        0,
+      )
+
+      console.log(
+        chalk.gray(
+          `Debug: Jira logged: ${jiraLoggedSeconds}s, Tempo logged: ${tempoLoggedSeconds}s, Tempo entries: ${tempoWorklogs.length}`,
+        ),
+      )
+
+      const totalLoggedSeconds = Math.max(jiraLoggedSeconds, tempoLoggedSeconds)
+
+      if (estimateSeconds > 0) {
+        console.log(
+          chalk.magenta("    Original Estimate: ") +
+            chalk.white(formatTimeFromSeconds(estimateSeconds)),
         )
-        const loggedSeconds = tempoWorklogs.reduce(
-          (total, log) => total + log.timeSpentSeconds,
-          0,
+      } else {
+        console.log(
+          chalk.magenta("    Original Estimate: ") + chalk.gray("Not set"),
         )
+      }
 
-        if (estimateSeconds > 0) {
-          console.log(
-            chalk.magenta("    Original Estimate: ") +
-              chalk.white(formatTimeFromSeconds(estimateSeconds)),
-          )
-        } else {
-          console.log(
-            chalk.magenta("    Original Estimate: ") + chalk.gray("Not set"),
-          )
-        }
+      if (remainingSeconds > 0) {
+        console.log(
+          chalk.magenta("    Time Remaining: ") +
+            chalk.white(formatTimeFromSeconds(remainingSeconds)),
+        )
+      }
 
-        if (loggedSeconds > 0) {
-          console.log(
-            chalk.magenta("    Time Logged: ") +
-              chalk.white(formatTimeFromSeconds(loggedSeconds)),
-          )
-        } else {
-          console.log(chalk.magenta("    Time Logged: ") + chalk.gray("None"))
-        }
-
-        if (estimateSeconds > 0 && loggedSeconds > 0) {
-          const diff =
-            ((loggedSeconds - estimateSeconds) / estimateSeconds) * 100
-          const remaining = estimateSeconds - loggedSeconds
-
-          let trendIcon = "🆗"
-          let statusText = "On track"
-
-          if (diff > 5) {
-            trendIcon = "📈"
-            statusText = `Over estimate by ${Math.round(diff)}%`
-          } else if (diff < -5) {
-            trendIcon = "📉"
-            statusText = `Under estimate by ${Math.abs(Math.round(diff))}%`
-          }
-
-          console.log(
-            chalk.magenta("  Status: ") +
-              chalk.white(`${trendIcon} ${statusText}`),
-          )
-
-          if (remaining > 0) {
-            console.log(
-              chalk.magenta("  Remaining: ") +
-                chalk.white(formatTimeFromSeconds(remaining)),
-            )
-          } else {
-            console.log(
-              chalk.magenta("  Over by: ") +
-                chalk.red(formatTimeFromSeconds(Math.abs(remaining))),
-            )
-          }
-        }
+      if (totalLoggedSeconds > 0) {
+        console.log(
+          chalk.magenta("    Time Logged: ") +
+            chalk.white(formatTimeFromSeconds(totalLoggedSeconds)),
+        )
 
         if (tempoWorklogs.length > 0) {
           console.log(
-            chalk.yellow(`\n📊 Work Logs (${tempoWorklogs.length} entries):`),
+            chalk.magenta("    (Tempo worklogs: ") +
+              chalk.white(
+                `${tempoWorklogs.length} entries, ${formatTimeFromSeconds(
+                  tempoLoggedSeconds,
+                )}`,
+              ) +
+              chalk.magenta(")"),
           )
-          tempoWorklogs.slice(0, 5).forEach((log, index) => {
-            console.log(
-              chalk.yellow("  " + (index + 1) + ". ") +
-                chalk.white(formatTimeFromSeconds(log.timeSpentSeconds)),
-            )
-          })
-
-          if (tempoWorklogs.length > 5) {
-            console.log(
-              chalk.gray(`  ... and ${tempoWorklogs.length - 5} more entries`),
-            )
-          }
         }
-      } catch (error) {
-        console.log(chalk.yellow(`⚠️  Could not fetch time tracking data`))
+      } else {
+        console.log(chalk.magenta("    Time Logged: ") + chalk.gray("None"))
       }
-    } else {
+
+      if (estimateSeconds > 0 && totalLoggedSeconds > 0) {
+        const diff =
+          ((totalLoggedSeconds - estimateSeconds) / estimateSeconds) * 100
+        const remaining = estimateSeconds - totalLoggedSeconds
+
+        let trendIcon = "🆗"
+        let statusText = "On track"
+
+        if (diff > 5) {
+          trendIcon = "📈"
+          statusText = `Over estimate by ${Math.round(diff)}%`
+        } else if (diff < -5) {
+          trendIcon = "📉"
+          statusText = `Under estimate by ${Math.abs(Math.round(diff))}%`
+        }
+
+        console.log(
+          chalk.magenta("  Status: ") +
+            chalk.white(`${trendIcon} ${statusText}`),
+        )
+
+        if (remaining > 0) {
+          console.log(
+            chalk.magenta("  Remaining: ") +
+              chalk.white(formatTimeFromSeconds(remaining)),
+          )
+        } else {
+          console.log(
+            chalk.magenta("  Over by: ") +
+              chalk.red(formatTimeFromSeconds(Math.abs(remaining))),
+          )
+        }
+      }
+
+      if (tempoWorklogs.length > 0) {
+        console.log(
+          chalk.yellow(
+            `\n📊 Tempo Work Logs (${tempoWorklogs.length} entries):`,
+          ),
+        )
+        tempoWorklogs.slice(0, 5).forEach((log, index) => {
+          console.log(
+            chalk.yellow("  " + (index + 1) + ". ") +
+              chalk.white(formatTimeFromSeconds(log.timeSpentSeconds)),
+          )
+        })
+
+        if (tempoWorklogs.length > 5) {
+          console.log(
+            chalk.gray(`  ... and ${tempoWorklogs.length - 5} more entries`),
+          )
+        }
+      }
+    } catch (error) {
       console.log(
-        chalk.gray(
-          `\n⚠️  Tempo token not configured - time tracking unavailable`,
-        ),
+        chalk.yellow(`⚠️  Could not fetch time tracking data: ${error}`),
       )
+      console.error("Debug error details:", error)
     }
   } catch (error) {
     console.error(

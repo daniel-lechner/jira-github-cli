@@ -187,6 +187,10 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
             0,
           )
 
+          console.log(
+            `Debug: ${item.jiraKey} - Estimate: ${estimateSeconds}, Logged: ${loggedSeconds}, Worklogs: ${tempoWorklogs.length}`,
+          )
+
           if (estimateSeconds > 0 || loggedSeconds > 0) {
             const loggedTime =
               loggedSeconds > 0 ? formatTimeFromSeconds(loggedSeconds) : "0min"
@@ -220,7 +224,12 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
               chalk.yellow(`${loggedTime}/${estimatedTime}`) +
               ` ${trendIcon}${percentage}`
           }
-        } catch (error) {}
+        } catch (error) {
+          console.error(
+            `Debug: Error fetching time data for ${item.jiraKey}:`,
+            error,
+          )
+        }
       }
 
       console.log(

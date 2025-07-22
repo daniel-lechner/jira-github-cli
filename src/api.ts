@@ -528,8 +528,10 @@ export async function getTempoWorklogsForIssue(
   issueKey: string,
 ): Promise<{ timeSpentSeconds: number }[]> {
   try {
+    const issueId = await getIssueIdFromKey(issueKey)
+
     const response = await axios.get(
-      `https://api.tempo.io/4/worklogs/issue/${issueKey}`,
+      `https://api.tempo.io/4/worklogs/issue/${issueId}?limit=1000`,
       {
         headers: {
           Authorization: `Bearer ${tempoToken}`,
@@ -537,8 +539,15 @@ export async function getTempoWorklogsForIssue(
         },
       },
     )
-    return response.data.results || []
+
+    const worklogs = response.data.results || []
+    return Array.isArray(worklogs) ? worklogs : []
   } catch (error: any) {
+    console.error(
+      `Debug: Tempo API error for ${issueKey}:`,
+      error.response?.status,
+      error.response?.data,
+    )
     return []
   }
 }
@@ -548,7 +557,11 @@ export async function getJiraIssueTimeTracking(
   email: string,
   token: string,
   issueKey: string,
-): Promise<{ originalEstimate?: string; timeSpent?: string }> {
+): Promise<{
+  originalEstimate?: string
+  timeSpent?: string
+  remainingEstimate?: string
+}> {
   const auth = Buffer.from(`${email}:${token}`).toString("base64")
 
   try {
@@ -561,7 +574,13 @@ export async function getJiraIssueTimeTracking(
         },
       },
     )
-    return response.data.fields.timetracking || {}
+
+    const timetracking = response.data.fields.timetracking || {}
+    return {
+      originalEstimate: timetracking.originalEstimate,
+      timeSpent: timetracking.timeSpent,
+      remainingEstimate: timetracking.remainingEstimate,
+    }
   } catch (error: any) {
     return {}
   }
