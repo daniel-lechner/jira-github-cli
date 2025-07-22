@@ -2,9 +2,13 @@ import chalk from "chalk"
 import Configstore from "configstore"
 import {
   compareSyncStatus,
+  formatTimeFromSeconds,
+  getJiraIssueTimeTracking,
+  getTempoWorklogsForIssue,
   getUserAccountId,
   listGitHubIssues,
   listJiraIssues,
+  parseJiraTimeToSeconds,
 } from "../api"
 import { JiraConfig } from "../types"
 
@@ -19,6 +23,7 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
   }
 
   const jiraConfig: JiraConfig = config.get("jira")
+  const tempoToken = config.get("tempoToken")
 
   try {
     console.log(chalk.cyan("⌛ Fetching issues from Jira and GitHub..."))
@@ -77,7 +82,7 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
     const headerText = filterMine ? "📋 My Issues:" : "📋 Open Issues Status:"
     console.log(chalk.cyan(`\n${headerText}\n`))
 
-    filteredStatuses.forEach((item) => {
+    for (const item of filteredStatuses) {
       let icon: string
       let color: any
       let statusText: string
@@ -131,12 +136,65 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
         }
       }
 
+      let timeInfo = ""
+      if (tempoToken && item.jiraIssue) {
+        try {
+          const [timeTracking, tempoWorklogs] = await Promise.all([
+            getJiraIssueTimeTracking(
+              jiraConfig.url,
+              jiraConfig.email,
+              jiraConfig.token,
+              item.jiraKey,
+            ),
+            getTempoWorklogsForIssue(tempoToken, item.jiraKey),
+          ])
+
+          const estimateSeconds = parseJiraTimeToSeconds(
+            timeTracking.originalEstimate || "",
+          )
+          const loggedSeconds = tempoWorklogs.reduce(
+            (total, log) => total + log.timeSpentSeconds,
+            0,
+          )
+
+          if (estimateSeconds > 0 || loggedSeconds > 0) {
+            const loggedTime =
+              loggedSeconds > 0 ? formatTimeFromSeconds(loggedSeconds) : "0min"
+            const estimatedTime =
+              estimateSeconds > 0
+                ? formatTimeFromSeconds(estimateSeconds)
+                : "0min"
+
+            let trendIcon = "🆗"
+            let percentage = ""
+
+            if (estimateSeconds > 0 && loggedSeconds > 0) {
+              const diff =
+                ((loggedSeconds - estimateSeconds) / estimateSeconds) * 100
+              if (diff > 5) {
+                trendIcon = "📈"
+                percentage = ` +${Math.round(diff)}%`
+              } else if (diff < -5) {
+                trendIcon = "📉"
+                percentage = ` ${Math.round(diff)}%`
+              } else {
+                percentage = " 0%"
+              }
+            }
+
+            timeInfo = ` — ${loggedTime}/${estimatedTime} ${trendIcon}${percentage}`
+          }
+        } catch (error) {
+          // Silently continue if time tracking fails
+        }
+      }
+
       console.log(
         color(
-          `${icon} ${item.jiraKey} ${truncatedTitle}${labels}${assigneeInfo}`,
+          `${icon} ${item.jiraKey} ${truncatedTitle}${labels}${assigneeInfo}${timeInfo}`,
         ),
       )
-    })
+    }
 
     if (filterMine) {
       const syncedCount = filteredStatuses.filter(

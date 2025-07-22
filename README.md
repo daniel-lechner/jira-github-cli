@@ -98,6 +98,9 @@ jgh list mine                      # Show only issues assigned to you
 jgh estimate PRJ-123 3h
 jgh time PRJ-123 2h "Fixed XYZ"
 
+# Detail with all Infos
+jgh details PRJ-123
+
 
 # Priority Levels
 !asap    # Maps to "Express" in Jira, creates "high-priority" label in GitHub

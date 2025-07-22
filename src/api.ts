@@ -522,3 +522,77 @@ function formatSecondsToJiraFormat(seconds: number): string {
   }
 }
 export { execAsync }
+
+export async function getTempoWorklogsForIssue(
+  tempoToken: string,
+  issueKey: string,
+): Promise<{ timeSpentSeconds: number }[]> {
+  try {
+    const response = await axios.get(
+      `https://api.tempo.io/4/worklogs/issue/${issueKey}`,
+      {
+        headers: {
+          Authorization: `Bearer ${tempoToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    )
+    return response.data.results || []
+  } catch (error: any) {
+    return []
+  }
+}
+
+export async function getJiraIssueTimeTracking(
+  url: string,
+  email: string,
+  token: string,
+  issueKey: string,
+): Promise<{ originalEstimate?: string; timeSpent?: string }> {
+  const auth = Buffer.from(`${email}:${token}`).toString("base64")
+
+  try {
+    const response = await axios.get(
+      `${url}/rest/api/3/issue/${issueKey}?fields=timetracking`,
+      {
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/json",
+        },
+      },
+    )
+    return response.data.fields.timetracking || {}
+  } catch (error: any) {
+    return {}
+  }
+}
+
+export function formatTimeFromSeconds(seconds: number): string {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours}h${minutes}min`
+  } else if (hours > 0) {
+    return `${hours}h`
+  } else {
+    return `${minutes}min`
+  }
+}
+
+export function parseJiraTimeToSeconds(jiraTime: string): number {
+  if (!jiraTime) return 0
+
+  let totalSeconds = 0
+  const hourMatch = jiraTime.match(/(\d+)h/)
+  const minuteMatch = jiraTime.match(/(\d+)m/)
+
+  if (hourMatch) {
+    totalSeconds += parseInt(hourMatch[1]) * 3600
+  }
+  if (minuteMatch) {
+    totalSeconds += parseInt(minuteMatch[1]) * 60
+  }
+
+  return totalSeconds
+}

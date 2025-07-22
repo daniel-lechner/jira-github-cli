@@ -3,6 +3,7 @@
 import { Command } from "commander"
 import { configCommand } from "./commands/config"
 import { createCommand } from "./commands/create"
+import { detailsCommand } from "./commands/details"
 import { estimateCommand } from "./commands/estimate"
 import { listCommand } from "./commands/list"
 import { reconfigureCommand } from "./commands/reconfigure"
@@ -80,6 +81,12 @@ program
   .argument("<duration>", "Estimated duration (e.g., 4h, 2.5h, 30min)")
   .description("Set time estimate for a Jira issue")
   .action(estimateCommand)
+
+program
+  .command("details")
+  .argument("<issueKey>", "Jira issue key (e.g., PRJ-123)")
+  .description("Show detailed information about a specific issue")
+  .action(detailsCommand)
 
 program
   .command("config")
