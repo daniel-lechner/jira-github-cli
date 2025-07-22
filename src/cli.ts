@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { Command } from "commander"
+import { readFileSync } from "fs"
+import { join } from "path"
 import { configCommand } from "./commands/config"
 import { createCommand } from "./commands/create"
 import { detailsCommand } from "./commands/details"
@@ -13,10 +15,14 @@ import { updateCommand } from "./commands/update"
 
 const program = new Command()
 
+const packageJson = JSON.parse(
+  readFileSync(join(__dirname, "../package.json"), "utf8"),
+)
+
 program
   .name("jgh")
   .description("CLI to create linked Jira and GitHub issues")
-  .version("1.0.0")
+  .version(packageJson.version)
 
 program
   .command("setup")
