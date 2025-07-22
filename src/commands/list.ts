@@ -2,17 +2,45 @@ import chalk from "chalk"
 import Configstore from "configstore"
 import {
   compareSyncStatus,
-  formatTimeFromSeconds,
   getJiraIssueTimeTracking,
   getTempoWorklogsForIssue,
   getUserAccountId,
   listGitHubIssues,
   listJiraIssues,
-  parseJiraTimeToSeconds,
 } from "../api"
 import { JiraConfig } from "../types"
 
 const config = new Configstore("jira-github-cli")
+
+function formatTimeFromSeconds(seconds: number): string {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+
+  if (hours > 0 && minutes > 0) {
+    return `${hours}h${minutes}min`
+  } else if (hours > 0) {
+    return `${hours}h`
+  } else {
+    return `${minutes}min`
+  }
+}
+
+function parseJiraTimeToSeconds(jiraTime: string): number {
+  if (!jiraTime) return 0
+
+  let totalSeconds = 0
+  const hourMatch = jiraTime.match(/(\d+)h/)
+  const minuteMatch = jiraTime.match(/(\d+)m/)
+
+  if (hourMatch) {
+    totalSeconds += parseInt(hourMatch[1]) * 3600
+  }
+  if (minuteMatch) {
+    totalSeconds += parseInt(minuteMatch[1]) * 60
+  }
+
+  return totalSeconds
+}
 
 export async function listCommand(filterMine: boolean = false): Promise<void> {
   if (!config.has("jira")) {
@@ -127,13 +155,15 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
             githubAssignee === "me" || (githubAssignee && githubAssignee !== "")
 
           if (isJiraAssignedToMe || isGithubAssignedToMe) {
-            assigneeInfo = " 👤@me"
+            assigneeInfo = " " + chalk.cyan("👤@me")
           } else if (jiraAssignee) {
-            assigneeInfo = ` 👤@${jiraAssignee.split(" ")[0]}`
+            assigneeInfo = " " + chalk.cyan(`👤@${jiraAssignee.split(" ")[0]}`)
           } else if (githubAssignee) {
-            assigneeInfo = ` 👤@${githubAssignee}`
+            assigneeInfo = " " + chalk.cyan(`👤@${githubAssignee}`)
           }
         }
+      } else {
+        assigneeInfo = " " + chalk.cyan("👤@me")
       }
 
       let timeInfo = ""
@@ -168,7 +198,10 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
             let trendIcon = "🆗"
             let percentage = ""
 
-            if (estimateSeconds > 0 && loggedSeconds > 0) {
+            if (loggedSeconds === 0 && estimateSeconds > 0) {
+              trendIcon = "⏱️"
+              percentage = ""
+            } else if (estimateSeconds > 0 && loggedSeconds > 0) {
               const diff =
                 ((loggedSeconds - estimateSeconds) / estimateSeconds) * 100
               if (diff > 5) {
@@ -182,17 +215,18 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
               }
             }
 
-            timeInfo = ` — ${loggedTime}/${estimatedTime} ${trendIcon}${percentage}`
+            timeInfo =
+              " — " +
+              chalk.yellow(`${loggedTime}/${estimatedTime}`) +
+              ` ${trendIcon}${percentage}`
           }
-        } catch (error) {
-          // Silently continue if time tracking fails
-        }
+        } catch (error) {}
       }
 
       console.log(
-        color(
-          `${icon} ${item.jiraKey} ${truncatedTitle}${labels}${assigneeInfo}${timeInfo}`,
-        ),
+        `${color(icon)} ${color(item.jiraKey)} ${chalk.gray(
+          truncatedTitle,
+        )}${labels}${assigneeInfo}${timeInfo}`,
       )
     }
 

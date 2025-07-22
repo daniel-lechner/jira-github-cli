@@ -1,4 +1,3 @@
-// src/commands/details.ts
 import chalk from "chalk"
 import Configstore from "configstore"
 import {
@@ -73,27 +72,35 @@ export async function detailsCommand(issueKey: string): Promise<void> {
       return
     }
 
-    console.log(chalk.blue(`\n📋 Issue Details: ${issueKey}\n`))
+    console.log(chalk.cyan(`\n📋 Issue Details: ${issueKey}\n`))
 
-    console.log(chalk.white(`Title: ${jiraIssue.summary}`))
-    console.log(chalk.white(`Status: ${jiraIssue.status}`))
-    console.log(chalk.white(`Assignee: ${jiraIssue.assignee || "Unassigned"}`))
+    console.log(chalk.cyan("Title: ") + chalk.white(jiraIssue.summary))
+    console.log(chalk.cyan("Status: ") + chalk.white(jiraIssue.status))
+    console.log(
+      chalk.cyan("Assignee: ") +
+        chalk.white(jiraIssue.assignee || "Unassigned"),
+    )
 
     if (jiraIssue.labels.length > 0) {
-      console.log(chalk.white(`Labels: ${jiraIssue.labels.join(", ")}`))
+      console.log(
+        chalk.cyan("Labels: ") + chalk.white(jiraIssue.labels.join(", ")),
+      )
     }
 
-    console.log(chalk.white(`Jira URL: ${jiraIssue.url}`))
+    console.log(chalk.cyan("Jira URL: ") + chalk.gray(jiraIssue.url))
 
     if (githubIssue) {
       console.log(chalk.green(`\n🔗 Linked GitHub Issue:`))
-      console.log(chalk.white(`  Number: #${githubIssue.number}`))
-      console.log(chalk.white(`  State: ${githubIssue.state}`))
-      console.log(chalk.white(`  URL: ${githubIssue.url}`))
+      console.log(
+        chalk.green("   Number: ") + chalk.white(`#${githubIssue.number}`),
+      )
+      console.log(chalk.green("   State: ") + chalk.white(githubIssue.state))
+      console.log(chalk.green("   URL: ") + chalk.gray(githubIssue.url))
 
       if (githubIssue.labels.length > 0) {
         console.log(
-          chalk.white(`  GitHub Labels: ${githubIssue.labels.join(", ")}`),
+          chalk.green("  GitHub Labels: ") +
+            chalk.white(githubIssue.labels.join(", ")),
         )
       }
     } else {
@@ -112,7 +119,7 @@ export async function detailsCommand(issueKey: string): Promise<void> {
           getTempoWorklogsForIssue(tempoToken, issueKey),
         ])
 
-        console.log(chalk.blue(`\n⏱️  Time Tracking:`))
+        console.log(chalk.magenta(`\n⏱️  Time Tracking:`))
 
         const estimateSeconds = parseJiraTimeToSeconds(
           timeTracking.originalEstimate || "",
@@ -124,22 +131,22 @@ export async function detailsCommand(issueKey: string): Promise<void> {
 
         if (estimateSeconds > 0) {
           console.log(
-            chalk.white(
-              `  Original Estimate: ${formatTimeFromSeconds(estimateSeconds)}`,
-            ),
+            chalk.magenta("    Original Estimate: ") +
+              chalk.white(formatTimeFromSeconds(estimateSeconds)),
           )
         } else {
-          console.log(chalk.gray(`  Original Estimate: Not set`))
+          console.log(
+            chalk.magenta("    Original Estimate: ") + chalk.gray("Not set"),
+          )
         }
 
         if (loggedSeconds > 0) {
           console.log(
-            chalk.white(
-              `  Time Logged: ${formatTimeFromSeconds(loggedSeconds)}`,
-            ),
+            chalk.magenta("    Time Logged: ") +
+              chalk.white(formatTimeFromSeconds(loggedSeconds)),
           )
         } else {
-          console.log(chalk.gray(`  Time Logged: None`))
+          console.log(chalk.magenta("    Time Logged: ") + chalk.gray("None"))
         }
 
         if (estimateSeconds > 0 && loggedSeconds > 0) {
@@ -158,32 +165,32 @@ export async function detailsCommand(issueKey: string): Promise<void> {
             statusText = `Under estimate by ${Math.abs(Math.round(diff))}%`
           }
 
-          console.log(chalk.white(`  Status: ${trendIcon} ${statusText}`))
+          console.log(
+            chalk.magenta("  Status: ") +
+              chalk.white(`${trendIcon} ${statusText}`),
+          )
 
           if (remaining > 0) {
             console.log(
-              chalk.white(`  Remaining: ${formatTimeFromSeconds(remaining)}`),
+              chalk.magenta("  Remaining: ") +
+                chalk.white(formatTimeFromSeconds(remaining)),
             )
           } else {
             console.log(
-              chalk.red(
-                `  Over by: ${formatTimeFromSeconds(Math.abs(remaining))}`,
-              ),
+              chalk.magenta("  Over by: ") +
+                chalk.red(formatTimeFromSeconds(Math.abs(remaining))),
             )
           }
         }
 
         if (tempoWorklogs.length > 0) {
           console.log(
-            chalk.blue(`\n📊 Work Logs (${tempoWorklogs.length} entries):`),
+            chalk.yellow(`\n📊 Work Logs (${tempoWorklogs.length} entries):`),
           )
           tempoWorklogs.slice(0, 5).forEach((log, index) => {
             console.log(
-              chalk.gray(
-                `  ${index + 1}. ${formatTimeFromSeconds(
-                  log.timeSpentSeconds,
-                )}`,
-              ),
+              chalk.yellow("  " + (index + 1) + ". ") +
+                chalk.white(formatTimeFromSeconds(log.timeSpentSeconds)),
             )
           })
 
