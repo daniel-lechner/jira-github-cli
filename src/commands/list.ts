@@ -42,6 +42,35 @@ function parseJiraTimeToSeconds(jiraTime: string): number {
   return totalSeconds
 }
 
+function getStatusOrder(status: string): number {
+  const statusLower = status.toLowerCase().replace(/\s+/g, " ").trim()
+
+  if (
+    statusLower.includes("arbeit") ||
+    statusLower.includes("progress") ||
+    statusLower.includes("doing")
+  )
+    return 1
+
+  if (
+    statusLower.includes("review") ||
+    statusLower.includes("testing") ||
+    statusLower.includes("implementation")
+  )
+    return 2
+
+  if (
+    statusLower.includes("todo") ||
+    statusLower.includes("open") ||
+    statusLower.includes("ready")
+  )
+    return 3
+
+  if (statusLower.includes("backlog")) return 4
+
+  return 3
+}
+
 export async function listCommand(filterMine: boolean = false): Promise<void> {
   if (!config.has("jira")) {
     console.log(
@@ -107,16 +136,6 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
       return
     }
 
-    function getStatusOrder(status: string): number {
-      const statusLower = status.toLowerCase()
-      if (statusLower.includes("progress")) return 1
-      if (statusLower.includes("review") || statusLower.includes("testing"))
-        return 2
-      if (statusLower.includes("todo") || statusLower.includes("open")) return 3
-      if (statusLower.includes("backlog")) return 4
-      return 5
-    }
-
     filteredStatuses.sort((a, b) => {
       const statusA = a.jiraIssue?.status || ""
       const statusB = b.jiraIssue?.status || ""
@@ -160,19 +179,18 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
       let statusDisplay = ""
       let statusColor = chalk.gray
 
-      if (jiraStatus.toLowerCase().includes("progress")) {
+      const statusLower = jiraStatus.toLowerCase()
+      if (statusLower.includes("arbeit") || statusLower.includes("progress")) {
         statusColor = chalk.yellow
-      } else if (jiraStatus.toLowerCase().includes("backlog")) {
+      } else if (statusLower.includes("backlog")) {
         statusColor = chalk.gray
       } else if (
-        jiraStatus.toLowerCase().includes("review") ||
-        jiraStatus.toLowerCase().includes("testing")
+        statusLower.includes("review") ||
+        statusLower.includes("testing") ||
+        statusLower.includes("implementation")
       ) {
         statusColor = chalk.blue
-      } else if (
-        jiraStatus.toLowerCase().includes("todo") ||
-        jiraStatus.toLowerCase().includes("open")
-      ) {
+      } else if (statusLower.includes("todo") || statusLower.includes("open")) {
         statusColor = chalk.white
       }
 
