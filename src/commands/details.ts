@@ -134,13 +134,6 @@ export async function detailsCommand(issueKey: string): Promise<void> {
         0,
       )
 
-      console.log(
-        chalk
-          .gray
-          // `Debug: Jira logged: ${jiraLoggedSeconds}s, Tempo logged: ${tempoLoggedSeconds}s, Tempo entries: ${tempoWorklogs.length}`,
-          (),
-      )
-
       const totalLoggedSeconds = Math.max(jiraLoggedSeconds, tempoLoggedSeconds)
 
       if (estimateSeconds > 0) {
@@ -199,18 +192,18 @@ export async function detailsCommand(issueKey: string): Promise<void> {
         }
 
         console.log(
-          chalk.magenta("  Status: ") +
+          chalk.magenta("    Status: ") +
             chalk.white(`${trendIcon} ${statusText}`),
         )
 
         if (remaining > 0) {
           console.log(
-            chalk.magenta("  Remaining: ") +
+            chalk.magenta("    Remaining: ") +
               chalk.white(formatTimeFromSeconds(remaining)),
           )
         } else {
           console.log(
-            chalk.magenta("  Over by: ") +
+            chalk.magenta("    Over by: ") +
               chalk.red(formatTimeFromSeconds(Math.abs(remaining))),
           )
         }
@@ -222,10 +215,29 @@ export async function detailsCommand(issueKey: string): Promise<void> {
             `\n📊 Tempo Work Logs (${tempoWorklogs.length} entries):`,
           ),
         )
+
         tempoWorklogs.slice(0, 5).forEach((log, index) => {
+          const duration = formatTimeFromSeconds(log.timeSpentSeconds)
+
+          let dateTimeStr = ""
+          if (log.startDate) {
+            const date = new Date(log.startDate)
+            const dateStr = date.toLocaleDateString("de-DE", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })
+
+            if (log.startTime) {
+              dateTimeStr = ` @ ${dateStr} ${log.startTime}`
+            } else {
+              dateTimeStr = ` @ ${dateStr}`
+            }
+          }
+
           console.log(
             chalk.yellow("  " + (index + 1) + ". ") +
-              chalk.white(formatTimeFromSeconds(log.timeSpentSeconds)),
+              chalk.white(duration + dateTimeStr),
           )
         })
 

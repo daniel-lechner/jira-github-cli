@@ -107,6 +107,29 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
       return
     }
 
+    function getStatusOrder(status: string): number {
+      const statusLower = status.toLowerCase()
+      if (statusLower.includes("progress")) return 1
+      if (statusLower.includes("review") || statusLower.includes("testing"))
+        return 2
+      if (statusLower.includes("todo") || statusLower.includes("open")) return 3
+      if (statusLower.includes("backlog")) return 4
+      return 5
+    }
+
+    filteredStatuses.sort((a, b) => {
+      const statusA = a.jiraIssue?.status || ""
+      const statusB = b.jiraIssue?.status || ""
+      const orderA = getStatusOrder(statusA)
+      const orderB = getStatusOrder(statusB)
+
+      if (orderA !== orderB) {
+        return orderA - orderB
+      }
+
+      return a.jiraKey.localeCompare(b.jiraKey)
+    })
+
     const headerText = filterMine ? "📋 My Issues:" : "📋 Open Issues Status:"
     console.log(chalk.cyan(`\n${headerText}\n`))
 
@@ -132,6 +155,28 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
           statusText = "Jira only"
           break
       }
+
+      const jiraStatus = item.jiraIssue?.status || "Unknown"
+      let statusDisplay = ""
+      let statusColor = chalk.gray
+
+      if (jiraStatus.toLowerCase().includes("progress")) {
+        statusColor = chalk.yellow
+      } else if (jiraStatus.toLowerCase().includes("backlog")) {
+        statusColor = chalk.gray
+      } else if (
+        jiraStatus.toLowerCase().includes("review") ||
+        jiraStatus.toLowerCase().includes("testing")
+      ) {
+        statusColor = chalk.blue
+      } else if (
+        jiraStatus.toLowerCase().includes("todo") ||
+        jiraStatus.toLowerCase().includes("open")
+      ) {
+        statusColor = chalk.white
+      }
+
+      statusDisplay = statusColor(`(${jiraStatus.toLowerCase()})`)
 
       const labels = item.labels.length > 0 ? ` +${item.labels.join(" +")}` : ""
       const truncatedTitle =
@@ -187,10 +232,6 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
             0,
           )
 
-          // console.log(
-          //   `Debug: ${item.jiraKey} - Estimate: ${estimateSeconds}, Logged: ${loggedSeconds}, Worklogs: ${tempoWorklogs.length}`,
-          // )
-
           if (estimateSeconds > 0 || loggedSeconds > 0) {
             const loggedTime =
               loggedSeconds > 0 ? formatTimeFromSeconds(loggedSeconds) : "0min"
@@ -233,7 +274,7 @@ export async function listCommand(filterMine: boolean = false): Promise<void> {
       }
 
       console.log(
-        `${color(icon)} ${color(item.jiraKey)} ${chalk.gray(
+        `${color(icon)} ${color(item.jiraKey)} ${statusDisplay} ${chalk.gray(
           truncatedTitle,
         )}${labels}${assigneeInfo}${timeInfo}`,
       )

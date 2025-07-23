@@ -526,7 +526,9 @@ export { execAsync }
 export async function getTempoWorklogsForIssue(
   tempoToken: string,
   issueKey: string,
-): Promise<{ timeSpentSeconds: number }[]> {
+): Promise<
+  { timeSpentSeconds: number; startDate?: string; startTime?: string }[]
+> {
   try {
     const issueId = await getIssueIdFromKey(issueKey)
 
@@ -541,7 +543,13 @@ export async function getTempoWorklogsForIssue(
     )
 
     const worklogs = response.data.results || []
-    return Array.isArray(worklogs) ? worklogs : []
+    return Array.isArray(worklogs)
+      ? worklogs.map((worklog) => ({
+          timeSpentSeconds: worklog.timeSpentSeconds,
+          startDate: worklog.startDate,
+          startTime: worklog.startTime,
+        }))
+      : []
   } catch (error: any) {
     console.error(
       `Debug: Tempo API error for ${issueKey}:`,
