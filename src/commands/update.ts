@@ -309,7 +309,8 @@ async function updateGitHubIssue(
         options.status.toLowerCase() === "rejected" ||
         options.status.toLowerCase() === "done" ||
         options.status.toLowerCase() === "completed" ||
-        options.status.toLowerCase() === "resolved")
+        options.status.toLowerCase() === "resolved" ||
+        options.status.toLowerCase() === "finished")
     ) {
       try {
         await execAsync(`gh issue close ${issueNumber}`)
@@ -358,6 +359,8 @@ export async function updateCommand(
   try {
     console.log(chalk.yellow(`⌛ Updating issue ${issueKey}...`))
 
+    const normalizedIssueKey = issueKey.toUpperCase()
+
     const [jiraIssues, githubIssues] = await Promise.all([
       listJiraIssues(
         jiraConfig.url,
@@ -370,20 +373,24 @@ export async function updateCommand(
 
     const syncStatuses = compareSyncStatus(jiraIssues, githubIssues)
     const syncedIssue = syncStatuses.find(
-      (s) => s.jiraKey === issueKey && s.status === "synced",
+      (s) => s.jiraKey === normalizedIssueKey && s.status === "synced",
     )
 
-    await updateJiraIssue(jiraConfig, issueKey, options)
+    await updateJiraIssue(jiraConfig, normalizedIssueKey, options)
 
     if (syncedIssue?.githubIssue) {
       await updateGitHubIssue(syncedIssue.githubIssue.number, options)
     } else {
       console.log(
-        chalk.yellow(`⚠️ No synced GitHub issue found for ${issueKey}`),
+        chalk.yellow(
+          `⚠️ No synced GitHub issue found for ${normalizedIssueKey}`,
+        ),
       )
     }
 
-    console.log(chalk.green(`✅ Issue ${issueKey} updated successfully!`))
+    console.log(
+      chalk.green(`✅ Issue ${normalizedIssueKey} updated successfully!`),
+    )
   } catch (error) {
     console.error(
       chalk.red("❌ Error updating issue:"),
